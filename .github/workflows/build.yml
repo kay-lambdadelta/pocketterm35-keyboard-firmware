@@ -1,0 +1,38 @@
+name: "build"
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    container: debian:trixie
+    steps:
+      - name: Install Linux dependencies
+        run: |
+          apt update
+          apt install -y --no-install-recommends \
+            rustup \
+            ca-certificates \
+            curl \
+            git \
+            build-essential \
+            gcc-arm-none-eabi
+
+      - uses: actions/checkout@v7
+        with:
+          submodules: "true"
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build
+        run: cargo build --release
+
+      - name: Upload firmware image
+        uses: actions/upload-artifact@v7
+        with:
+          name: pocketterm35-keyboard-firmware
+          path: target/thumbv6m-none-eabi/release/pocketterm35-keyboard-firmware.elf
+          if-no-files-found: error
