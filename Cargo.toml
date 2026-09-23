@@ -1,0 +1,28 @@
+cargo-features = ["different-binary-name"]
+
+[package]
+name = "pocketterm35-keyboard-firmware"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name = "pocketterm35-keyboard-firmware"
+path = "src/main.rs"
+filename = "pocketterm35-keyboard-firmware.elf"
+
+[dependencies]
+cortex-m = "0.7"
+cortex-m-rt = "0.7"
+critical-section = "1.2"
+embedded-alloc = "0.7"
+embedded-hal = "1.0"
+panic-halt = "1.0"
+rp2040-boot2 = "0.3"
+rp2040-hal = { version = "0.12", features = ["critical-section-impl"] }
+rp2040-pac = { version = "0.6", features = ["rt"] }
+usb-device = "0.3"
+usbd-hid = "0.10"
+
+[profile.release]
+lto = "fat"
+codegen-units = 1
