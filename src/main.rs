@@ -218,23 +218,15 @@ fn main() -> ! {
 
     let pwm_slices = Slices::new(pac.PWM, &mut pac.RESETS);
     let mut pwm_bl = pwm_slices.pwm2;
-    let mut pwm_ad = pwm_slices.pwm1;
 
     pwm_bl.set_div_int(2);
     pwm_bl.set_top(65535);
     pwm_bl.enable();
 
-    pwm_ad.set_div_int(2);
-    pwm_ad.set_top(65535);
-    pwm_ad.enable();
+    let mut backlight_channel = pwm_bl.channel_a;
+    backlight_channel.output_to(pins.gpio20);
 
-    let mut bl_channel = pwm_bl.channel_a;
-    bl_channel.output_to(pins.gpio20);
-
-    let mut ad_channel = pwm_ad.channel_a;
-    ad_channel.output_to(pins.gpio18);
-
-    let mut backlight = Backlight::new(bl_channel, ad_channel);
+    let mut backlight = Backlight::new(backlight_channel);
 
     let mut device_mode = DeviceMode::default();
     let mut mode_change = ModeChangeDetector::default();
@@ -339,10 +331,8 @@ fn main() -> ! {
                         .push_input(&SystemControlReport { usage_id: 0 });
                 });
             }
-            KeyEvent::BacklightUp => backlight.bl_up(),
-            KeyEvent::BacklightDown => backlight.bl_down(),
-            KeyEvent::AdUp => backlight.ad_up(),
-            KeyEvent::AdDown => backlight.ad_down(),
+            KeyEvent::BacklightUp => backlight.brightness_up(),
+            KeyEvent::BacklightDown => backlight.brightness_down(),
         });
 
         critical_section::with(|critical_section| {

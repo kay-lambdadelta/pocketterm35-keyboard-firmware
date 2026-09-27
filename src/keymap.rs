@@ -21,8 +21,6 @@ pub enum KeyAction {
     OneShot { modifier: u8, usage: KeyboardUsage },
     BacklightUp,
     BacklightDown,
-    AdUp,
-    AdDown,
 }
 
 pub const KEY_MAP: [[Option<KeyAction>; COLUMNS]; ROWS] = [
@@ -118,8 +116,8 @@ pub const FN_MAP: [[Option<KeyAction>; COLUMNS]; ROWS] = [
     [
         Some(KeyAction::Key(KeyboardUsage::KeyboardEscape)),
         Some(KeyAction::Media(MediaKey::Mute)),
-        Some(KeyAction::AdDown),
-        Some(KeyAction::AdUp),
+        Some(KeyAction::Media(MediaKey::VolumeDecrement)),
+        Some(KeyAction::Media(MediaKey::VolumeIncrement)),
         Some(KeyAction::Media(MediaKey::PrevTrack)),
         Some(KeyAction::Media(MediaKey::PlayPause)),
         Some(KeyAction::Media(MediaKey::NextTrack)),

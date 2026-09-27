@@ -12,8 +12,6 @@ pub enum KeyEvent {
     OneShot { modifier: u8, usage: KeyboardUsage },
     BacklightUp,
     BacklightDown,
-    AdUp,
-    AdDown,
 }
 
 #[allow(clippy::needless_range_loop)]
@@ -70,16 +68,6 @@ pub fn build_report(
                 Some(KeyAction::BacklightDown) => {
                     if edge {
                         on_event(KeyEvent::BacklightDown);
-                    }
-                }
-                Some(KeyAction::AdUp) => {
-                    if edge {
-                        on_event(KeyEvent::AdUp);
-                    }
-                }
-                Some(KeyAction::AdDown) => {
-                    if edge {
-                        on_event(KeyEvent::AdDown);
                     }
                 }
             }
