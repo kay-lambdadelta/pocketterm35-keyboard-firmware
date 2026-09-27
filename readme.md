@@ -32,4 +32,4 @@ This works like the original firmware, and as you would expect a keyboard to wor
 
 Holding Start+Select (for 4 seconds) swaps the keyboard mode, from Keyboard to Gamepad to Mouse emulation, cycling on the fourth hold. The indicator LED on the keyboard will flash to indicate the switch occurred.
 
-If the firmware crashes, the indicator LED will spam repeatedly your error in morse code (I found this [webapp](https://sollozzo2.github.io/smorse/) to work reliably). Please file a bug report if it crashes, this should never ever occur.
+If the firmware crashes, the indicator LED will spam repeatedly your error in morse code (I found this [webapp](https://sollozzo2.github.io/smorse/) to work reliably to read it). Please file a bug report if it crashes, this should never ever occur.
