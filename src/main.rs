@@ -11,6 +11,7 @@ mod keymap;
 mod matrix;
 mod mode;
 mod mouse;
+mod panic_handler;
 
 use alloc::boxed::Box;
 use core::{cell::RefCell, time::Duration};
@@ -25,7 +26,6 @@ use keymap::row6_column;
 use matrix::KeyMatrix;
 use mode::{DeviceMode, ModeChangeDetector};
 use mouse::MouseState;
-use panic_halt as _;
 use rp2040_hal::{
     Timer, Watchdog,
     clocks::{Clock, init_clocks_and_plls},
@@ -140,6 +140,49 @@ fn main() -> ! {
     let mut delay = Delay::new(core.SYST, clocks.system_clock.freq().to_Hz());
     let mut timer = Timer::new(pac.TIMER, &mut pac.RESETS, &clocks);
 
+    // Leak the USB bus so it can be static
+    let usb_bus = Box::leak(Box::new(UsbBusAllocator::new(UsbBus::new(
+        pac.USBCTRL_REGS,
+        pac.USBCTRL_DPRAM,
+        clocks.usb_clock,
+        true,
+        &mut pac.RESETS,
+    )))) as _;
+
+    let string_descriptors = [StringDescriptors::new(LangID::EN_US)
+        .manufacturer("Waveshare")
+        .product("PocketTerm35 Builtin")
+        .serial_number("343434")];
+
+    let keyboard = HIDClass::new(usb_bus, KeyboardReport::desc(), 1);
+    let consumer = HIDClass::new_ep_in(usb_bus, MediaKeyboardReport::desc(), 10);
+    let system = HIDClass::new_ep_in(usb_bus, SystemControlReport::desc(), 4);
+    let gamepad = HIDClass::new_ep_in(usb_bus, GamepadReport::desc(), 4);
+    let mouse = HIDClass::new_ep_in(usb_bus, MouseReport::desc(), 4);
+
+    let usb_device = UsbDeviceBuilder::new(usb_bus, USB_ID)
+        .strings(&string_descriptors)
+        .unwrap()
+        .build();
+
+    critical_section::with(|critical_section| {
+        USB_CONTEXT.replace(
+            critical_section,
+            Some(UsbContext {
+                device: usb_device,
+                keyboard,
+                consumer,
+                system,
+                gamepad,
+                mouse,
+            }),
+        );
+    });
+
+    unsafe {
+        NVIC::unmask(rp2040_pac::Interrupt::USBCTRL_IRQ);
+    }
+
     let row_pins = [
         pins.gpio16.into_pull_down_input().into_dyn_pin(),
         pins.gpio10.into_pull_down_input().into_dyn_pin(),
@@ -192,43 +235,6 @@ fn main() -> ! {
     ad_channel.output_to(pins.gpio18);
 
     let mut backlight = Backlight::new(bl_channel, ad_channel);
-
-    // Leak the USB bus so it can be static
-    let usb_bus = Box::leak(Box::new(UsbBusAllocator::new(UsbBus::new(
-        pac.USBCTRL_REGS,
-        pac.USBCTRL_DPRAM,
-        clocks.usb_clock,
-        true,
-        &mut pac.RESETS,
-    )))) as _;
-
-    let string_descriptors = [StringDescriptors::new(LangID::EN_US)
-        .manufacturer("Waveshare")
-        .product("PocketTerm35 Builtin")
-        .serial_number("343434")];
-
-    let usb_device = UsbDeviceBuilder::new(usb_bus, USB_ID)
-        .strings(&string_descriptors)
-        .unwrap()
-        .build();
-
-    critical_section::with(|critical_section| {
-        USB_CONTEXT.replace(
-            critical_section,
-            Some(UsbContext {
-                device: usb_device,
-                keyboard: HIDClass::new(usb_bus, KeyboardReport::desc(), 1),
-                consumer: HIDClass::new_ep_in(usb_bus, MediaKeyboardReport::desc(), 10),
-                system: HIDClass::new_ep_in(usb_bus, SystemControlReport::desc(), 4),
-                gamepad: HIDClass::new_ep_in(usb_bus, GamepadReport::desc(), 4),
-                mouse: HIDClass::new_ep_in(usb_bus, MouseReport::desc(), 4),
-            }),
-        );
-    });
-
-    unsafe {
-        NVIC::unmask(rp2040_pac::Interrupt::USBCTRL_IRQ);
-    }
 
     let mut device_mode = DeviceMode::default();
     let mut mode_change = ModeChangeDetector::default();
