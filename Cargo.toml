@@ -20,7 +20,7 @@ morse-codec = "0.4"
 rp2040-boot2 = "0.3"
 rp2040-hal = { version = "0.12", features = ["critical-section-impl"] }
 rp2040-pac = { version = "0.6", features = ["rt"] }
-usb-device = "0.3"
+usb-device = { version = "0.3", features = ["control-buffer-256"] }
 usbd-hid = "0.10"
 
 [profile.release]
